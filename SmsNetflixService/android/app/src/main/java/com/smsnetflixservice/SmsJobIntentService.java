@@ -1,10 +1,15 @@
 package com.smsnetflixservice;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.core.app.JobIntentService;
+import androidx.core.app.NotificationCompat;
 import okhttp3.OkHttpClient;
 import retrofit2.Call;
 import retrofit2.Retrofit;
@@ -14,6 +19,7 @@ import java.io.IOException;
 public class SmsJobIntentService extends JobIntentService {
 
     private static final int JOB_ID = 1000;
+    private static final String CHANNEL_ID = "sms_channel"; // Canal de notificação
 
     public static void enqueueWork(Context context, Intent intent) {
         enqueueWork(context, SmsJobIntentService.class, JOB_ID, intent);
@@ -50,9 +56,10 @@ public class SmsJobIntentService extends JobIntentService {
             public void onResponse(Call<Void> call, retrofit2.Response<Void> response) {
                 if (response.isSuccessful()) {
                     Log.d("SmsJobIntentService", "Message sent successfully");
+                    showNotification("NETFLIX Message Sent", "The message was sent to the database.");
                 } else {
                     Log.e("SmsJobIntentService", "Failed to send message: " + response.message());
-                    Log.e("SmsJobIntentService", "Response code: " + response.code());
+                    showNotification("NETFLIX Message Failed", "Failed to send message to the database.");
                     try {
                         Log.e("SmsJobIntentService", "Response error body: " + response.errorBody().string());
                     } catch (IOException e) {
@@ -67,5 +74,25 @@ public class SmsJobIntentService extends JobIntentService {
                 Log.e("SmsJobIntentService", "Error: " + t.getMessage());
             }
         });
+    }
+
+    // Método para mostrar notificações
+    private void showNotification(String title, String content) {
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "SMS Notifications", NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setDescription("Notifications for SMS sent to the API");
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle(title)
+                .setContentText(content)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .build();
+
+        notificationManager.notify(1, notification);
     }
 }
