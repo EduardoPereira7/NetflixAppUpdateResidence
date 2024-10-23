@@ -51,6 +51,7 @@ const App = () => {
     });
 
     return () => {
+      // Limpa o listener ao desmontar o componente
       subscription.remove();
     };
   }, []);
