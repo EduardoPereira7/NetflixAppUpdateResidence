@@ -12,6 +12,7 @@ const {LogModule} = NativeModules;
 
 const App = () => {
   const [logs, setLogs] = useState<string>('');
+  const [currentMessage, setCurrentMessage] = useState<string | null>(null);
 
   useEffect(() => {
     // Carrega o log de mensagens quando o componente é montado
@@ -71,6 +72,34 @@ const App = () => {
     }
   };
 
+  // Função para buscar a mensagem atual na API
+  const fetchMessage = async () => {
+    try {
+      const response = await fetch(
+        'https://cxlnqtbmtvkzscowleil.supabase.co/rest/v1/message?id=eq.ca2dd11f-f6a3-4e05-b6b9-c40057b8724f',
+        {
+          method: 'GET',
+          headers: {
+            apikey:
+              'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4bG5xdGJtdHZrenNjb3dsZWlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjkwOTk3MjcsImV4cCI6MjA0NDY3NTcyN30.qXE_dZ-Vp3EgE0Dvnf69U4Od7tvYmdkRjH_bbE86SxE',
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentMessage(data[0]?.content || 'Sem Mensagem');
+      } else {
+        console.error('Failed to fetch message', await response.text());
+        Alert.alert('Error', 'Failed to fetch the message.');
+      }
+    } catch (error) {
+      console.error('Error fetching message', error);
+      Alert.alert('Error', 'An error occurred while fetching the message.');
+    }
+  };
+
   return (
     <View style={{padding: 20}}>
       <Text style={{fontSize: 20, marginBottom: 10}}>Logs:</Text>
@@ -81,6 +110,13 @@ const App = () => {
       <Button title="Clear Logs" onPress={clearLogs} />
       <View style={{marginVertical: 10}} />
       <Button title="Remove Message" onPress={removeMessage} />
+      <View style={{marginVertical: 10}} />
+      <Button title="Fetch Current Message" onPress={fetchMessage} />
+      {currentMessage && (
+        <Text style={{marginTop: 10, fontSize: 16}}>
+          Current Message: {currentMessage}
+        </Text>
+      )}
     </View>
   );
 };
